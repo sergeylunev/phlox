@@ -19,36 +19,41 @@ class Debug
     {
         $this->output->writeln(sprintf("== %s ==", $name));
 
-        foreach ($chunk->getCodes() as $key => $value) {
-            $this->disassembleInstruction($chunk, $key);
+        for ($offset = 0; $offset < $chunk->getCount();) {
+            $offset = $this->disassembleInstruction($chunk, $offset);
         }
     }
 
-    public function disassembleInstruction(Chunk $chunk, int $offset): void
+    public function disassembleInstruction(Chunk $chunk, int $offset): int
     {
         $this->output->write(sprintf("%04d ", $offset));
 
         $instruction = $chunk->getCode($offset);
         switch ($instruction) {
             case OpCode::OP_CONSTANT:
-                $this->constantInstruction("OP_CONSTANT", $chunk, $offset); break;
+                return $this->constantInstruction("OP_CONSTANT", $chunk, $offset);
             case OpCode::OP_RETURN:
-                $this->simpleInstruction("OP_RETURN"); break;
+                return $this->simpleInstruction("OP_RETURN", $offset);
             default:
-                $this->output->writeln(sprintf("Unknown opcode %d", $instruction)); break;
+                $this->output->writeln(sprintf("Unknown opcode %d", $instruction));
+                return $offset + 1;
         }
     }
 
-    protected function simpleInstruction(string $name): void
+    protected function simpleInstruction(string $name, int $offset): int
     {
         $this->output->write(sprintf("%s\n", $name));
+
+        return $offset + 1;
     }
 
-    private function constantInstruction(string $name, Chunk $chunk, int $offset): void
+    private function constantInstruction(string $name, Chunk $chunk, int $offset): int
     {
         $constant = $chunk->getCode($offset + 1);
         $this->output->write(sprintf("%-16s %4d '", $name, $constant));
         $value = $chunk->getConstant($constant);
-        $this->output->writeln($value->printValue());
+        $this->output->writeln($value->printValue() . "'");
+
+        return $offset + 2;
     }
 }
