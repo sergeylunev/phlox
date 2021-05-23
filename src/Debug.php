@@ -28,6 +28,15 @@ class Debug
     {
         $this->output->write(sprintf("%04d ", $offset));
 
+        if (
+            $offset > 0
+            && $chunk->getLine($offset) === $chunk->getLine($offset - 1)
+        ) {
+            $this->output->write("   | ");
+        } else {
+            $this->output->write(sprintf("%4d ", $chunk->getLine($offset)));
+        }
+
         $instruction = $chunk->getCode($offset);
         switch ($instruction) {
             case OpCode::OP_CONSTANT:

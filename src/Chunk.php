@@ -13,17 +13,21 @@ class Chunk
 
     private ValueArray $constants;
 
-    public function __construct(array $code, int $count)
-    {
-        $this->code = $code;
-        $this->count = $count;
+    /** @var int[] */
+    private array $lines;
 
+    public function __construct()
+    {
+        $this->code = [];
+        $this->count = 0;
         $this->constants = new ValueArray();
+        $this->lines = [];
     }
 
-    public function writeChunk(int $byte): void
+    public function writeChunk(int $byte, int $line): void
     {
         $this->code[] = $byte;
+        $this->lines[] = $line;
         $this->count++;
     }
 
@@ -61,4 +65,15 @@ class Chunk
     {
         return $this->constants->getValue($offset);
     }
+
+    public function getLines(): array
+    {
+        return $this->lines;
+    }
+
+    public function getLine(int $index): int
+    {
+        return $this->getLines()[$index];
+    }
+
 }
