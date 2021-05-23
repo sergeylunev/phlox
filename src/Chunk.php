@@ -11,10 +11,14 @@ class Chunk
 
     private int $count;
 
+    private ValueArray $constants;
+
     public function __construct(array $code, int $count)
     {
         $this->code = $code;
         $this->count = $count;
+
+        $this->constants = new ValueArray();
     }
 
     public function writeChunk(int $byte): void
@@ -44,5 +48,17 @@ class Chunk
     public function getCount(): int
     {
         return $this->count;
+    }
+
+    public function addConstant(Value $value): int
+    {
+        $this->constants->writeValueArray($value);
+
+        return $this->constants->getCount() - 1;
+    }
+
+    public function getConstant(int $offset): Value
+    {
+        return $this->constants->getValue($offset);
     }
 }

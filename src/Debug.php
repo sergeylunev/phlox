@@ -30,6 +30,8 @@ class Debug
 
         $instruction = $chunk->getCode($offset);
         switch ($instruction) {
+            case OpCode::OP_CONSTANT:
+                $this->constantInstruction("OP_CONSTANT", $chunk, $offset); break;
             case OpCode::OP_RETURN:
                 $this->simpleInstruction("OP_RETURN"); break;
             default:
@@ -40,5 +42,13 @@ class Debug
     protected function simpleInstruction(string $name): void
     {
         $this->output->write(sprintf("%s\n", $name));
+    }
+
+    private function constantInstruction(string $name, Chunk $chunk, int $offset): void
+    {
+        $constant = $chunk->getCode($offset + 1);
+        $this->output->write(sprintf("%-16s %4d '", $name, $constant));
+        $value = $chunk->getConstant($constant);
+        $this->output->writeln($value->printValue());
     }
 }

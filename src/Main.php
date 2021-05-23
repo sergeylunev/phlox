@@ -16,6 +16,14 @@ class Main extends Command {
         $debug = new Debug($output);
 
         $chunk = new Chunk([], 0);
+
+        $value = new Value();
+        $value->value = 1.2;
+        $constant = $chunk->addConstant($value);
+
+        $chunk->writeChunk(OpCode::OP_CONSTANT);
+        $chunk->writeChunk($constant);
+
         $chunk->writeChunk(OpCode::OP_RETURN);
         $debug->disassembleChunk($chunk, 'test chunk');
         $chunk->freeChunk();
