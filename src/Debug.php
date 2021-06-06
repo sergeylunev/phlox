@@ -15,6 +15,16 @@ class Debug
         $this->output = $output;
     }
 
+    public function writeln(string $message): void
+    {
+        $this->output->writeln($message);
+    }
+
+    public function write(string $message): void
+    {
+        $this->output->write($message);
+    }
+
     public function disassembleChunk(Chunk $chunk, string $name): void
     {
         $this->output->writeln(sprintf("== %s ==", $name));
