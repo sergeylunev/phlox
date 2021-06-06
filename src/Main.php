@@ -49,6 +49,7 @@ class Main extends Command
 
         $chunk->writeChunk(OpCode::OP_CONSTANT, 123);
         $chunk->writeChunk($const, 123);
+        $chunk->writeChunk(OpCode::OP_NEGATE, 123);
 
         $chunk->writeChunk(OpCode::OP_RETURN, 124);
         $debug->disassembleChunk($chunk, 'test chunk');

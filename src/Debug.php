@@ -51,6 +51,8 @@ class Debug
         switch ($instruction) {
             case OpCode::OP_CONSTANT:
                 return $this->constantInstruction("OP_CONSTANT", $chunk, $offset);
+            case OpCode::OP_NEGATE:
+                return $this->simpleInstruction("OP_NEGATE", $offset);
             case OpCode::OP_RETURN:
                 return $this->simpleInstruction("OP_RETURN", $offset);
             default:

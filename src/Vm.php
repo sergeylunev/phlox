@@ -48,6 +48,11 @@ class Vm
                     $constant = $this->readConstant();
                     $this->push($constant);
                     break;
+                case OpCode::OP_NEGATE:
+                    $value = $this->pop();
+                    $value->value = -$value->value;
+                    $this->push($value);
+                    break;
                 case OpCode::OP_RETURN:
                     $this->debug->writeln($this->pop()->printValue());
                     return IntereptCode::INTERPRET_OK;
