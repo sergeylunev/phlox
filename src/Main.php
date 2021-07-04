@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 class Main extends Command
 {
@@ -28,35 +29,9 @@ class Main extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $withDebug = $input->getOption(self::DEBUG_MODE);
+        $phlox = new Phlox($output);
 
-        $debug = new Debug($output);
-
-        $chunk = new Chunk();
-
-        $vm = new Vm($withDebug, $debug);
-
-        $value = new Value();
-        $value->value = 1.2;
-        $constant = $chunk->addConstant($value);
-
-        $chunk->writeChunk(OpCode::OP_CONSTANT, 123);
-        $chunk->writeChunk($constant, 123);
-
-        $value2 = new Value();
-        $value2->value = 1000;
-        $const = $chunk->addConstant($value2);
-
-        $chunk->writeChunk(OpCode::OP_CONSTANT, 123);
-        $chunk->writeChunk($const, 123);
-        $chunk->writeChunk(OpCode::OP_NEGATE, 123);
-
-        $chunk->writeChunk(OpCode::OP_RETURN, 124);
-        $debug->disassembleChunk($chunk, 'test chunk');
-
-        $vm->interpret($chunk);
-
-        $chunk->freeChunk();
+        $phlox->runString('1 + 2');
 
         return Command::SUCCESS;
     }
