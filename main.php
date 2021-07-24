@@ -4,8 +4,8 @@
 
 require __DIR__.'/vendor/autoload.php';
 
-use Phlox\tools\AstGenerator;
-use Phlox\tools\GenerateAstCommand;
+use Phlox\Tools\AstGenerator;
+use Phlox\Tools\GenerateAstCommand;
 use Symfony\Component\Console\Application;
 use Phlox\Main;
 
