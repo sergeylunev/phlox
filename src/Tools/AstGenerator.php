@@ -33,7 +33,7 @@ class AstGenerator
                     'Expr $expression'
                 ],
                 'Literal' => [
-                    'Object $value'
+                    'mixed $value'
                 ],
                 'Unary' => [
                     'Token $operator',

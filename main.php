@@ -4,6 +4,7 @@
 
 require __DIR__.'/vendor/autoload.php';
 
+use Phlox\Debug;
 use Phlox\Tools\AstGenerator;
 use Phlox\Tools\GenerateAstCommand;
 use Symfony\Component\Console\Application;
@@ -21,5 +22,6 @@ try {
 
 $application->add(new GenerateAstCommand($astGenerator));
 $application->add(new Main());
+$application->add(new Debug());
 
 $application->run();

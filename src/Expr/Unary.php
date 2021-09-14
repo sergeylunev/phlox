@@ -6,6 +6,7 @@ namespace Phlox\Expr;
 
 use Phlox\Expr;
 use Phlox\Token;
+use Phlox\Visitor;
 
 class Unary extends Expr
 {
@@ -16,5 +17,9 @@ class Unary extends Expr
     {
         $this->operator = $operator;
         $this->right = $right;
+    }
+    public function accept(Visitor $visitor)
+    {
+        return $visitor->visitUnaryExpr($this);
     }
 }

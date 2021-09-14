@@ -4,10 +4,10 @@ namespace Phlox;
 
 class Token
 {
-    private string $tokenType;
-    private string $lexeme;
-    private $literal;
-    private int $line;
+    public string $tokenType;
+    public string $lexeme;
+    public $literal;
+    public int $line;
 
     public function __construct(
         string $tokenType,
