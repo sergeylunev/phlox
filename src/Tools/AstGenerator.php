@@ -52,24 +52,28 @@ class AstGenerator
         $path = $this->outputDir . '/' . $baseName . '.php';
         $subDirectoryPath = $this->outputDir . '/' . $baseName;
 
+        $nameSpace = sprintf('%s\%s', 'Phlox', $baseName);
+
         if (!is_dir($subDirectoryPath)) {
             mkdir($subDirectoryPath);
         }
 
         $file = fopen($path, 'w');
+        $this->defineBaseClass($file, $baseName);
+        fclose($file);
 
-        $this->writeFileHeader($file, 'Phlox', $baseName);
-        $this->writeFooter($file);
-
+        $visitorPath = $this->outputDir . '/Visitor.php';
+        $file = fopen($visitorPath, 'w');
+        $this->defineVisitor($file, $baseName, $types);
         fclose($file);
 
         foreach ($types as $class => $fields) {
             $classPath = $subDirectoryPath . '/' . $class . '.php';
             $file = fopen($classPath, 'w');
-            $nameSpace = sprintf('%s\%s', 'Phlox', $baseName);
 
             $this->writeFileHeader($file, $nameSpace, $class, $baseName);
             $this->writeConstructor($file, $fields);
+            $this->writeConcreteAcceptMethod($file, $class, $baseName);
             $this->writeFooter($file);
 
             fclose($file);
@@ -80,17 +84,27 @@ class AstGenerator
         $file,
         string $namespace,
         string $className,
-        string $extends = null
+        string $extends = null,
+        bool $isAbstract = false,
+        bool $isInterface = false
     ): void {
         fwrite($file, "<?php\n\n");
         fwrite($file, "declare(strict_types=1);\n\n");
         fwrite($file, "namespace {$namespace};\n\n");
 
-        if ($extends) {
-            fwrite($file, "class {$className} extends {$extends}\n{\n");
-        } else {
-            fwrite($file, "class {$className}\n{\n");
+        $type = $isInterface ? 'interface' : 'class';
+
+        $classString = "{$type} {$className}\n{\n";
+
+        if ($extends !== null) {
+            $classString = "class {$className} extends {$extends}\n{\n";
         }
+
+        if ($isAbstract) {
+            $classString = 'abstract ' . $classString;
+        }
+
+        fwrite($file, $classString);
     }
 
     protected function writeFooter($file): void
@@ -125,8 +139,55 @@ class AstGenerator
         fwrite($file, "    }\n");
     }
 
-    private function writeBlankLine($file): void
+    private function writeBlankLine($file, int $times = 1): void
     {
-        fwrite($file, "\n");
+        for ($i = 0; $i < $times; $i++) {
+            fwrite($file, "\n");
+        }
+    }
+
+    private function writeAbstractAcceptMethod($file): void
+    {
+        fwrite($file, "    public abstract function accept(Visitor \$visitor);");
+    }
+
+    private function writeConcreteAcceptMethod(
+        $file,
+        string $className,
+        string $baseName
+    ): void {
+        fwrite($file, "    public function accept(Visitor \$visitor)\n");
+        fwrite($file, "    {\n");
+        fwrite($file, "        return \$visitor->visit{$className}{$baseName}(\$this);\n");
+        fwrite($file, "    }\n");
+    }
+
+    private function defineVisitor(
+        $file,
+        string $baseName,
+        array $types
+    ): void {
+        $this->writeFileHeader($file, 'Phlox', 'Visitor', null, false, true);
+
+        foreach ($types as $class => $fields) {
+            $functionName = sprintf(
+                "    public function visit%s%s($%s);",
+                $class,
+                $baseName,
+                mb_strtolower($baseName)
+            );
+            fwrite($file, $functionName);
+            $this->writeBlankLine($file, 2);
+        }
+
+        $this->writeFooter($file);
+    }
+
+    protected function defineBaseClass($file, string $baseName): void
+    {
+        $this->writeFileHeader($file, 'Phlox', $baseName, null, true);
+        $this->writeAbstractAcceptMethod($file);
+        $this->writeBlankLine($file);
+        $this->writeFooter($file);
     }
 }
