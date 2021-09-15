@@ -39,14 +39,29 @@ class Phlox
         $scanner = new Scanner($source, $this);
         $tokens = $scanner->scanTokens();
 
-        foreach ($tokens as $token) {
-            $this->output->writeln($token);
+        $parser = new Parser($this, $tokens);
+        $expression = $parser->parse();
+
+        if ($this->hadError) {
+            return;
         }
+
+        $this->output->writeln((new AstPrinter())->print($expression));
     }
 
     public function error(int $line, string $message): void
     {
         $this->report($line, "", $message);
+    }
+
+public function tokenTypeError(Token $token, string $message): void
+    {
+        if ($token->tokenType === TokenType::TOKEN_EOF) {
+            $this->report($token->line, " at end", $message);
+        } else {
+            $this->report($token->line, " at '" . $token->lexeme . "'", $message);
+        }
+
     }
 
     private function report(int $line, string $where, string $message): void
