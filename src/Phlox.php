@@ -8,13 +8,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Phlox
 {
-
     private OutputInterface $output;
     private bool $hadError = false;
+    private bool $hadRuntimeError = false;
+    private Interpreter $interpreter;
 
     public function __construct(OutputInterface $output)
     {
         $this->output = $output;
+        $this->interpreter = new Interpreter($output, $this);
     }
 
     public function main()
@@ -24,7 +26,7 @@ class Phlox
 
     public function runFile(string $path)
     {
-        if ($this->hadError) {
+        if ($this->hadError || $this->hadRuntimeError) {
             throw new \Exception();
         }
     }
@@ -46,7 +48,8 @@ class Phlox
             return;
         }
 
-        $this->output->writeln((new AstPrinter())->print($expression));
+        $this->interpreter->interpret($expression);
+//        $this->output->writeln((new AstPrinter())->print($expression));
     }
 
     public function error(int $line, string $message): void
@@ -54,7 +57,7 @@ class Phlox
         $this->report($line, "", $message);
     }
 
-public function tokenTypeError(Token $token, string $message): void
+    public function tokenTypeError(Token $token, string $message): void
     {
         if ($token->tokenType === TokenType::TOKEN_EOF) {
             $this->report($token->line, " at end", $message);
@@ -71,5 +74,11 @@ public function tokenTypeError(Token $token, string $message): void
         );
 
         $this->hadError = true;
+    }
+
+    public function runtimeError(RuntimeError $exception)
+    {
+        $this->output->writeln($exception->getMessage() . "\n[line " . $exception->token->line . ']');
+        $this->hadRuntimeError = true;
     }
 }
