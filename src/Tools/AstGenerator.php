@@ -42,6 +42,18 @@ class AstGenerator
             ]
         );
 
+        $this->defineAst(
+            'Stmt',
+            [
+                'Expression' => [
+                    'Expr $expression',
+                ],
+                'Prnt' => [
+                    'Expr $expression',
+                ],
+            ]
+        );
+
     }
 
     protected function defineAst(
