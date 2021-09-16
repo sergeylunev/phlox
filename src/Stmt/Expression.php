@@ -6,7 +6,7 @@ namespace Phlox\Stmt;
 
 use Phlox\Expr;
 use Phlox\Stmt;
-use Phlox\Visitor;
+use Phlox\StmtVisitor;
 
 class Expression extends Stmt
 {
@@ -16,7 +16,7 @@ class Expression extends Stmt
     {
         $this->expression = $expression;
     }
-    public function accept(Visitor $visitor)
+    public function accept(StmtVisitor $visitor)
     {
         return $visitor->visitExpressionStmt($this);
     }

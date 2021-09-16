@@ -151,7 +151,7 @@ class Scanner
         }
 
         $text = mb_substr($this->source, $this->start, $this->current);
-        $isKeyword = in_array($text, $this->keywords);
+        $isKeyword = key_exists($text, $this->keywords);
         $type = TokenType::TOKEN_IDENTIFIER;
         if ($isKeyword) {
             $type = $this->keywords[$text];
@@ -233,7 +233,7 @@ class Scanner
 
         $this->advance();
         // NOTE: Here I set 2 for identfy string end. May be it's bad and need to be fixed
-        $value = mb_substr($this->source, $this->start + 1, $this->current - 2);
+        $value = mb_substr($this->source, $this->start + 1, $this->current - (mb_strlen($this->source) + 1));
         $this->addToken(TokenType::TOKEN_STRING, $value);
     }
 

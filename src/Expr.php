@@ -6,5 +6,5 @@ namespace Phlox;
 
 abstract class Expr
 {
-    public abstract function accept(Visitor $visitor);
+    public abstract function accept(ExprVisitor $visitor);
 }

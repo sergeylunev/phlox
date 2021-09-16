@@ -6,6 +6,8 @@ use Phlox\Expr\Binary;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Unary;
+use Phlox\Stmt\Expression;
+use Phlox\Stmt\Prnt;
 use Throwable;
 
 class Parser
@@ -21,13 +23,18 @@ class Parser
         $this->phlox = $phlox;
     }
 
-    public function parse(): ?Expr
+    /**
+     * @return Stmt[]
+     */
+    public function parse(): array
     {
-        try {
-            return $this->expression();
-        } catch (ParseError $error) {
-            return null;
+        $statements = [];
+
+        while (!$this->isAtEnd()) {
+            $statements[] = $this->statement();
         }
+
+        return $statements;
     }
 
     /**
@@ -95,7 +102,7 @@ class Parser
             return false;
         }
 
-        return $this->peek()->tokenType == $type;
+        return $this->peek()->tokenType === $type;
     }
 
     private function advance(): Token
@@ -252,5 +259,39 @@ class Parser
 
             $this->advance();
         }
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function statement(): Stmt
+    {
+        if ($this->match(TokenType::TOKEN_PRINT)) {
+            return $this->printStatement();
+        }
+
+        return $this->expressionStatement();
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function printStatement(): Stmt
+    {
+        $value = $this->expression();
+        $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after value.");
+
+        return new Prnt($value);
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function expressionStatement(): Stmt
+    {
+        $value = $this->expression();
+        $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after value.");
+
+        return new Expression($value);
     }
 }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phlox\Expr;
 
 use Phlox\Expr;
+use Phlox\ExprVisitor;
 use Phlox\Token;
-use Phlox\Visitor;
 
 class Binary extends Expr
 {
@@ -20,7 +20,7 @@ class Binary extends Expr
         $this->operator = $operator;
         $this->right = $right;
     }
-    public function accept(Visitor $visitor)
+    public function accept(ExprVisitor $visitor)
     {
         return $visitor->visitBinaryExpr($this);
     }

@@ -42,14 +42,13 @@ class Phlox
         $tokens = $scanner->scanTokens();
 
         $parser = new Parser($this, $tokens);
-        $expression = $parser->parse();
+        $statements = $parser->parse();
 
         if ($this->hadError) {
             return;
         }
 
-        $this->interpreter->interpret($expression);
-//        $this->output->writeln((new AstPrinter())->print($expression));
+        $this->interpreter->interpret($statements);
     }
 
     public function error(int $line, string $message): void

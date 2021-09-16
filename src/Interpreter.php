@@ -2,9 +2,11 @@
 
 namespace Phlox;
 
+use Phlox\Stmt\Expression;
+use Phlox\Stmt\Prnt;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Interpreter implements Visitor
+class Interpreter implements ExprVisitor, StmtVisitor
 {
     private OutputInterface $output;
     private Phlox $phlox;
@@ -15,11 +17,15 @@ class Interpreter implements Visitor
         $this->phlox = $phlox;
     }
 
-    public function interpret(Expr $expression): void
+    /**
+     * @param Stmt[] $statements
+     */
+    public function interpret(array $statements): void
     {
         try {
-            $value = $this->evaluate($expression);
-            $this->output->writeln($this->stringify($value));
+            foreach ($statements as $statement) {
+                $this->execute($statement);
+            }
         } catch (RuntimeError $exception) {
             $this->phlox->runtimeError($exception);
         }
@@ -156,5 +162,28 @@ class Interpreter implements Visitor
         if ($value === null) return 'nil';
 
         return $value;
+    }
+
+    /**
+     * @param Expression $stmt
+     */
+    public function visitExpressionStmt($stmt): void
+    {
+        $this->evaluate($stmt->expression);
+    }
+
+    /**
+     * @param Prnt $stmt
+     */
+    public function visitPrntStmt($stmt): void
+    {
+        $value = $this->evaluate($stmt->expression);
+
+        echo $this->stringify($value);
+    }
+
+    private function execute(Stmt $statement): void
+    {
+        $statement->accept($this);
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phlox\Expr;
 
 use Phlox\Expr;
-use Phlox\Visitor;
+use Phlox\ExprVisitor;
 
 class Grouping extends Expr
 {
@@ -15,7 +15,7 @@ class Grouping extends Expr
     {
         $this->expression = $expression;
     }
-    public function accept(Visitor $visitor)
+    public function accept(ExprVisitor $visitor)
     {
         return $visitor->visitGroupingExpr($this);
     }

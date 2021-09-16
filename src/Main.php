@@ -31,7 +31,7 @@ class Main extends Command
     {
         $phlox = new Phlox($output);
 
-        $phlox->runString('1 + 2 + 5 + 10 * 100');
+        $phlox->runString('print "one";');
 
         return Command::SUCCESS;
     }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phlox\Expr;
 
 use Phlox\Expr;
-use Phlox\Visitor;
+use Phlox\ExprVisitor;
 
 class Literal extends Expr
 {
@@ -15,13 +15,8 @@ class Literal extends Expr
     {
         $this->value = $value;
     }
-    public function accept(Visitor $visitor)
+    public function accept(ExprVisitor $visitor)
     {
         return $visitor->visitLiteralExpr($this);
-    }
-
-    public function __toString(): string
-    {
-        return (string) $this->value;
     }
 }

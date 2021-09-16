@@ -74,7 +74,7 @@ class AstGenerator
         $this->defineBaseClass($file, $baseName);
         fclose($file);
 
-        $visitorPath = $this->outputDir . '/Visitor.php';
+        $visitorPath = $this->outputDir . "/{$baseName}Visitor.php";
         $file = fopen($visitorPath, 'w');
         $this->defineVisitor($file, $baseName, $types);
         fclose($file);
@@ -158,9 +158,9 @@ class AstGenerator
         }
     }
 
-    private function writeAbstractAcceptMethod($file): void
+    private function writeAbstractAcceptMethod($file, string $baseName): void
     {
-        fwrite($file, "    public abstract function accept(Visitor \$visitor);");
+        fwrite($file, "    public abstract function accept({$baseName}Visitor \$visitor);");
     }
 
     private function writeConcreteAcceptMethod(
@@ -168,7 +168,7 @@ class AstGenerator
         string $className,
         string $baseName
     ): void {
-        fwrite($file, "    public function accept(Visitor \$visitor)\n");
+        fwrite($file, "    public function accept({$baseName}Visitor \$visitor)\n");
         fwrite($file, "    {\n");
         fwrite($file, "        return \$visitor->visit{$className}{$baseName}(\$this);\n");
         fwrite($file, "    }\n");
@@ -179,7 +179,7 @@ class AstGenerator
         string $baseName,
         array $types
     ): void {
-        $this->writeFileHeader($file, 'Phlox', 'Visitor', null, false, true);
+        $this->writeFileHeader($file, 'Phlox', "{$baseName}Visitor", null, false, true);
 
         foreach ($types as $class => $fields) {
             $functionName = sprintf(
@@ -198,7 +198,7 @@ class AstGenerator
     protected function defineBaseClass($file, string $baseName): void
     {
         $this->writeFileHeader($file, 'Phlox', $baseName, null, true);
-        $this->writeAbstractAcceptMethod($file);
+        $this->writeAbstractAcceptMethod($file, $baseName);
         $this->writeBlankLine($file);
         $this->writeFooter($file);
     }

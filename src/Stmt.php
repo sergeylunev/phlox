@@ -6,5 +6,5 @@ namespace Phlox;
 
 abstract class Stmt
 {
-    public abstract function accept(Visitor $visitor);
+    public abstract function accept(StmtVisitor $visitor);
 }
