@@ -31,6 +31,7 @@ class Scanner
     ];
 
     private Phlox $phlox;
+    private int $sourceLength;
 
     public function __construct(
         string $source,
@@ -38,6 +39,9 @@ class Scanner
     )
     {
         $this->source = $source;
+
+        $this->sourceLength = mb_strlen($this->source);
+
         $this->phlox = $phlox;
     }
 
@@ -150,7 +154,7 @@ class Scanner
             $this->advance();
         }
 
-        $text = mb_substr($this->source, $this->start, $this->current);
+        $text = mb_substr($this->source, $this->start, $this->current - $this->sourceLength);
         $isKeyword = key_exists($text, $this->keywords);
         $type = TokenType::TOKEN_IDENTIFIER;
         if ($isKeyword) {
@@ -162,9 +166,7 @@ class Scanner
 
     private function isAlpha(string $c): bool
     {
-        return ($c >= 'a' && $c <= 'z') ||
-            ($c >= 'A' && $c <= 'Z') ||
-            $c === '_';
+        return ctype_alpha($c) || $c === '_';
     }
 
     private function isAlphaNumeric(string $c): bool
@@ -232,8 +234,7 @@ class Scanner
         }
 
         $this->advance();
-        // NOTE: Here I set 2 for identfy string end. May be it's bad and need to be fixed
-        $value = mb_substr($this->source, $this->start + 1, $this->current - (mb_strlen($this->source) + 1));
+        $value = mb_substr($this->source, $this->start + 1, $this->current - ($this->sourceLength + 1));
         $this->addToken(TokenType::TOKEN_STRING, $value);
     }
 

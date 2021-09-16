@@ -24,14 +24,21 @@ class Phlox
 
     }
 
-    public function runFile(string $path)
+    public function runFile(string $path): void
     {
+        if (!file_exists($path)) {
+            throw new \Exception("There is no file on {$path}");
+        }
+
+        $string = file_get_contents($path);
+        $this->run($string);
+
         if ($this->hadError || $this->hadRuntimeError) {
             throw new \Exception();
         }
     }
 
-    public function runString(string $string)
+    public function runString(string $string): void
     {
         $this->run($string);
     }
