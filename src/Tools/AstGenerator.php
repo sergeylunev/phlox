@@ -24,6 +24,10 @@ class AstGenerator
         $this->defineAst(
             'Expr',
             [
+                'Assign' => [
+                    'Token $name',
+                    'Expr $value',
+                ],
                 'Binary' => [
                     'Expr $left',
                     'Token $operator',
@@ -39,18 +43,28 @@ class AstGenerator
                     'Token $operator',
                     'Expr $right'
                 ],
+                'Variable' => [
+                    'Token $name'
+                ]
             ]
         );
 
         $this->defineAst(
             'Stmt',
             [
+                'Block' => [
+                    'array $statements',
+                ],
                 'Expression' => [
                     'Expr $expression',
                 ],
                 'Prnt' => [
                     'Expr $expression',
                 ],
+                'Vari' => [
+                    'Token $name',
+                    'Expr $initializer'
+                ]
             ]
         );
 

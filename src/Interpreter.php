@@ -2,6 +2,8 @@
 
 namespace Phlox;
 
+use http\Env;
+use Phlox\Expr\Assign;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Prnt;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -10,11 +12,14 @@ class Interpreter implements ExprVisitor, StmtVisitor
 {
     private OutputInterface $output;
     private Phlox $phlox;
+    private Environment $environment;
 
     public function __construct(OutputInterface $output, Phlox $phlox)
     {
         $this->output = $output;
         $this->phlox = $phlox;
+
+        $this->environment = new Environment();
     }
 
     /**
@@ -185,5 +190,54 @@ class Interpreter implements ExprVisitor, StmtVisitor
     private function execute(Stmt $statement): void
     {
         $statement->accept($this);
+    }
+
+    private function executeBlock(array $statements, Environment $environment): void
+    {
+        $previous = $this->environment;
+
+        try {
+            $this->environment = $environment;
+
+            foreach ($statements as $statement) {
+                $this->execute($statement);
+            }
+        } finally {
+            $this->environment = $previous;
+        }
+    }
+
+    public function visitVariableExpr($expr)
+    {
+        return $this->environment->get($expr->name);
+    }
+
+    /**
+     * @param Stmt $stmt
+     */
+    public function visitVariStmt($stmt): void
+    {
+        $value = null;
+        if ($stmt->initializer !== null) {
+            $value = $this->evaluate($stmt->initializer);
+        }
+
+        $this->environment->define($stmt->name->lexeme, $value);
+    }
+
+    /**
+     * @param Assign $expr
+     */
+    public function visitAssignExpr($expr): mixed
+    {
+        $value = $this->evaluate($expr->value);
+        $this->environment->assign($expr->name, $value);
+
+        return $value;
+    }
+
+    public function visitBlockStmt($stmt): void
+    {
+        $this->executeBlock($stmt->statements, new Environment($this->environment));
     }
 }

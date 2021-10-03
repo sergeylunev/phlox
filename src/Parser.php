@@ -2,12 +2,16 @@
 
 namespace Phlox;
 
+use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Unary;
+use Phlox\Expr\Variable;
+use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Prnt;
+use Phlox\Stmt\Vari;
 use Throwable;
 
 class Parser
@@ -31,7 +35,8 @@ class Parser
         $statements = [];
 
         while (!$this->isAtEnd()) {
-            $statements[] = $this->statement();
+//            $statements[] = $this->statement();
+            $statements[] = $this->declaration();
         }
 
         return $statements;
@@ -42,7 +47,30 @@ class Parser
      */
     private function expression(): Expr
     {
-        return $this->equality();
+        return $this->assignment();
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function assignment(): Expr
+    {
+        $expr = $this->equality();
+
+        if ($this->match(TokenType::TOKEN_EQUAL)) {
+            $equals = $this->previous();
+            $value = $this->assignment();
+
+            if ($expr instanceof Variable) {
+                $name = $expr->name;
+
+                return new Assign($name, $value);
+            }
+
+            $this->error($equals, 'Invalid assignment target.');
+        }
+
+        return $expr;
     }
 
     /**
@@ -204,6 +232,10 @@ class Parser
             return new Literal($this->previous()->literal);
         }
 
+        if ($this->match(TokenType::TOKEN_IDENTIFIER)) {
+            return new Variable($this->previous());
+        }
+
         if ($this->match(TokenType::TOKEN_LEFT_PAREN)) {
             $expr = $this->expression();
             $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -269,6 +301,9 @@ class Parser
         if ($this->match(TokenType::TOKEN_PRINT)) {
             return $this->printStatement();
         }
+        if ($this->match(TokenType::TOKEN_LEFT_BRACE)) {
+            return new Block($this->block());
+        }
 
         return $this->expressionStatement();
     }
@@ -293,5 +328,51 @@ class Parser
         $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after value.");
 
         return new Expression($value);
+    }
+
+    private function declaration(): ?Stmt
+    {
+        try {
+            if ($this->match(TokenType::TOKEN_VAR)) {
+                return $this->varDeclaration();
+            }
+
+            return $this->statement();
+        } catch (ParseError $exception) {
+            $this->synchronize();
+
+            return null;
+        }
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function varDeclaration(): Stmt
+    {
+        $name = $this->consume(TokenType::TOKEN_IDENTIFIER, 'Expect variable name.');
+
+        $initializer = null;
+
+        if ($this->match(TokenType::TOKEN_EQUAL)) {
+            $initializer = $this->expression();
+        }
+
+        $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+        return new Vari($name, $initializer);
+    }
+
+    private function block(): array
+    {
+        $statements = [];
+
+        while (!$this->check(TokenType::TOKEN_RIGHT_BRACE) && !$this->isAtEnd()) {
+            $statements[] = $this->declaration();
+        }
+
+        $this->consume(TokenType::TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+
+        return $statements;
     }
 }

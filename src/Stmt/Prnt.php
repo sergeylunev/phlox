@@ -16,7 +16,6 @@ class Prnt extends Stmt
     {
         $this->expression = $expression;
     }
-
     public function accept(StmtVisitor $visitor)
     {
         return $visitor->visitPrntStmt($this);
