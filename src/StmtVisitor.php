@@ -16,4 +16,6 @@ interface StmtVisitor
 
     public function visitVariStmt($stmt);
 
+    public function visitWhleStmt($stmt);
+
 }

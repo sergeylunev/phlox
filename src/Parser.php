@@ -15,6 +15,7 @@ use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Prnt;
 use Phlox\Stmt\Vari;
+use Phlox\Stmt\Whle;
 use Throwable;
 
 class Parser
@@ -307,6 +308,9 @@ class Parser
         if ($this->match(TokenType::TOKEN_PRINT)) {
             return $this->printStatement();
         }
+        if ($this->match(TokenType::TOKEN_WHILE)) {
+            return $this->whileStatement();
+        }
         if ($this->match(TokenType::TOKEN_LEFT_BRACE)) {
             return new Block($this->block());
         }
@@ -424,5 +428,18 @@ class Parser
         }
 
         return $expr;
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function whileStatement(): Stmt
+    {
+        $this->consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+        $condition = $this->expression();
+        $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+        $body = $this->statement();
+
+        return new Whle($condition, $body);
     }
 }

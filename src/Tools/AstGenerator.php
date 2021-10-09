@@ -74,6 +74,10 @@ class AstGenerator
                 'Vari' => [
                     'Token $name',
                     'Expr $initializer'
+                ],
+                'Whle' => [
+                    'Expr $condition',
+                    'Stmt $body'
                 ]
             ]
         );

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Phlox\Stmt;
 
+use Phlox\Stmt;
+use Phlox\StmtVisitor;
+
 class Block extends Stmt
 {
     public array $statements;

@@ -8,6 +8,7 @@ use Phlox\Expr\Logical;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Prnt;
+use Phlox\Stmt\Whle;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Interpreter implements ExprVisitor, StmtVisitor
@@ -273,5 +274,15 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
 
         return $this->evaluate($expr->right);
+    }
+
+    /**
+     * @param Whle $stmt
+     */
+    public function visitWhleStmt($stmt): void
+    {
+        while ($this->isTruthy($this->evaluate($stmt->condition))) {
+            $this->execute($stmt->body);
+        }
     }
 }
