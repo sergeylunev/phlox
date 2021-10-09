@@ -39,6 +39,11 @@ class AstGenerator
                 'Literal' => [
                     'mixed $value'
                 ],
+                'Logical' => [
+                    'Expr $left',
+                    'Token $operator',
+                    'Expr $right',
+                ],
                 'Unary' => [
                     'Token $operator',
                     'Expr $right'
@@ -57,6 +62,11 @@ class AstGenerator
                 ],
                 'Expression' => [
                     'Expr $expression',
+                ],
+                'Fi' => [
+                    'Expr $condition',
+                    'Stmt $thenBranch',
+                    'Stmt $elseBranch'
                 ],
                 'Prnt' => [
                     'Expr $expression',

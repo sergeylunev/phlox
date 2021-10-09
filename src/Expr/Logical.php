@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Phlox\Expr;
+
+use Phlox\Expr;
+use Phlox\ExprVisitor;
+use Phlox\Token;
+
+class Logical extends Expr
+{
+    public Expr $left;
+    public Token $operator;
+    public Expr $right;
+
+    public function __construct(Expr $left, Token $operator, Expr $right)
+    {
+        $this->left = $left;
+        $this->operator = $operator;
+        $this->right = $right;
+    }
+    public function accept(ExprVisitor $visitor)
+    {
+        return $visitor->visitLogicalExpr($this);
+    }
+}

@@ -14,6 +14,8 @@ interface ExprVisitor
 
     public function visitLiteralExpr($expr);
 
+    public function visitLogicalExpr($expr);
+
     public function visitUnaryExpr($expr);
 
     public function visitVariableExpr($expr);

@@ -2,14 +2,17 @@
 
 namespace Phlox;
 
+use Cassandra\Statement;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
+use Phlox\Expr\Logical;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\Fi;
 use Phlox\Stmt\Prnt;
 use Phlox\Stmt\Vari;
 use Throwable;
@@ -55,7 +58,7 @@ class Parser
      */
     private function assignment(): Expr
     {
-        $expr = $this->equality();
+        $expr = $this->or();
 
         if ($this->match(TokenType::TOKEN_EQUAL)) {
             $equals = $this->previous();
@@ -298,6 +301,9 @@ class Parser
      */
     private function statement(): Stmt
     {
+        if ($this->match(TokenType::TOKEN_IF)) {
+            return $this->ifStatement();
+        }
         if ($this->match(TokenType::TOKEN_PRINT)) {
             return $this->printStatement();
         }
@@ -374,5 +380,49 @@ class Parser
         $this->consume(TokenType::TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 
         return $statements;
+    }
+
+    private function ifStatement(): Stmt
+    {
+        $this->consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+        $condition = $this->expression();
+        $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after if condition.");
+
+        $thenBranch = $this->statement();
+        $elseBranch = null;
+
+        if ($this->match(TokenType::TOKEN_ELSE)) {
+            $elseBranch = $this->statement();
+        }
+
+        return new Fi($condition, $thenBranch, $elseBranch);
+    }
+
+    private function or(): Expr
+    {
+        $expr = $this->and();
+
+        while ($this->match(TokenType::TOKEN_OR)) {
+            $operator = $this->previous();
+            $right = $this->and();
+
+            $expr = new Logical($expr, $operator, $right);
+        }
+
+        return $expr;
+    }
+
+    private function and(): Expr
+    {
+        $expr = $this->equality();
+
+        while ($this->match(TokenType::TOKEN_AND)) {
+            $operator = $this->previous();
+            $right = $this->equality();
+
+            $expr = new Logical($expr, $operator, $right);
+        }
+
+        return $expr;
     }
 }

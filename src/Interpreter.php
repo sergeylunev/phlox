@@ -4,7 +4,9 @@ namespace Phlox;
 
 use http\Env;
 use Phlox\Expr\Assign;
+use Phlox\Expr\Logical;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\Fi;
 use Phlox\Stmt\Prnt;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -239,5 +241,37 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitBlockStmt($stmt): void
     {
         $this->executeBlock($stmt->statements, new Environment($this->environment));
+    }
+
+    /**
+     * @param Fi $stmt
+     */
+    public function visitFiStmt($stmt): void
+    {
+        if ($this->isTruthy($this->evaluate($stmt->condition))) {
+            $this->execute($stmt->thenBranch);
+        } elseif ($stmt->elseBranch !== null) {
+            $this->execute($stmt->elseBranch);
+        }
+    }
+
+    /**
+     * @param Logical $expr
+     */
+    public function visitLogicalExpr($expr)
+    {
+        $left = $this->evaluate($expr->left);
+
+        if ($expr->operator->tokenType === TokenType::TOKEN_OR) {
+            if ($this->isTruthy($left)) {
+                return $left;
+            }
+        } else {
+            if (!$this->isTruthy($left)) {
+                return $left;
+            }
+        }
+
+        return $this->evaluate($expr->right);
     }
 }
