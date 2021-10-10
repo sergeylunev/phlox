@@ -3,6 +3,7 @@
 namespace Phlox;
 
 use Cassandra\Statement;
+use http\Message\Body;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Grouping;
@@ -22,7 +23,9 @@ class Parser
 {
     /** @var Token[] */
     private array $tokens;
+
     private int $current = 0;
+
     private Phlox $phlox;
 
     public function __construct(Phlox $phlox, array $tokens)
@@ -217,8 +220,8 @@ class Parser
     }
 
     /**
-     * @return Expr
      * @throws ParseError
+     * @return Expr
      */
     private function primary(): Expr
     {
@@ -253,8 +256,9 @@ class Parser
     /**
      * @param string $tokenType
      * @param string $message
-     * @return Token
+     *
      * @throws ParseError
+     * @return Token
      */
     private function consume(string $tokenType, string $message): Token
     {
@@ -302,6 +306,9 @@ class Parser
      */
     private function statement(): Stmt
     {
+        if ($this->match(TokenType::TOKEN_FOR)) {
+            return $this->forStatement();
+        }
         if ($this->match(TokenType::TOKEN_IF)) {
             return $this->ifStatement();
         }
@@ -441,5 +448,54 @@ class Parser
         $body = $this->statement();
 
         return new Whle($condition, $body);
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function forStatement(): Stmt
+    {
+        $this->consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+
+        $initializer = null;
+        if ($this->match(TokenType::TOKEN_SEMICOLON)) {
+            $initializer = null;
+        } elseif ($this->match(TokenType::TOKEN_VAR)) {
+            $initializer = $this->varDeclaration();
+        } else {
+            $initializer = $this->expressionStatement();
+        }
+
+        $condition = null;
+        if (!$this->check(TokenType::TOKEN_SEMICOLON)) {
+            $condition = $this->expression();
+        }
+        $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+        $incriment = null;
+        if (!$this->check(TokenType::TOKEN_RIGHT_PAREN)) {
+            $incriment = $this->expression();
+        }
+        $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        $body = $this->statement();
+
+        if ($incriment !== null) {
+            $body = new Block([
+                $body,
+                new Expression($incriment)
+            ]);
+        }
+
+        if ($condition === null) {
+            $condition = new Literal(true);
+        }
+        $body = new Whle($condition, $body);
+
+        if ($initializer !== null) {
+            $body = new Block([$initializer, $body]);
+        }
+
+        return $body;
     }
 }
