@@ -15,6 +15,7 @@ use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
+use Phlox\Stmt\Fun;
 use Phlox\Stmt\Prnt;
 use Phlox\Stmt\Vari;
 use Phlox\Stmt\Whle;
@@ -351,6 +352,9 @@ class Parser
     private function declaration(): ?Stmt
     {
         try {
+            if ($this->match(TokenType::TOKEN_FUN)) {
+                return $this->fun("function");
+            }
             if ($this->match(TokenType::TOKEN_VAR)) {
                 return $this->varDeclaration();
             }
@@ -536,5 +540,30 @@ class Parser
         $paren = $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
 
         return new Call($callee, $paren, $arguments);
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function fun(string $kind): Fun
+    {
+        $name = $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect {$kind} name.");
+
+        $this->consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after {$kind} name.");
+        $parameters = [];
+        if (!$this->check(TokenType::TOKEN_RIGHT_PAREN)) {
+            do {
+                if (count($parameters) >= 255) {
+                    $this->error($this->peek(), "Can't have more than 255 parameters.");
+                }
+                $parameters[] = $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect parameter name.");
+            } while ($this->match(TokenType::TOKEN_COMMA));
+        }
+        $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+
+        $this->consume(TokenType::TOKEN_LEFT_BRACE, "Expect '{' before {$kind} body.");
+        $body = $this->block();
+
+        return new Fun($name, $parameters, $body);
     }
 }

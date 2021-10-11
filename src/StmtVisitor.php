@@ -10,6 +10,8 @@ interface StmtVisitor
 
     public function visitExpressionStmt($stmt);
 
+    public function visitFunStmt($stmt);
+
     public function visitFiStmt($stmt);
 
     public function visitPrntStmt($stmt);

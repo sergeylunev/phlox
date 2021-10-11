@@ -68,6 +68,11 @@ class AstGenerator
                 'Expression' => [
                     'Expr $expression',
                 ],
+                'Fun' => [
+                    'Token $name',
+                    'array $params',
+                    'array $body',
+                ],
                 'Fi' => [
                     'Expr $condition',
                     'Stmt $thenBranch',

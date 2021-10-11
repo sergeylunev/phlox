@@ -9,6 +9,7 @@ use Phlox\Expr\Logical;
 use Phlox\Native\Clock;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
+use Phlox\Stmt\Fun;
 use Phlox\Stmt\Prnt;
 use Phlox\Stmt\Whle;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -18,7 +19,7 @@ class Interpreter implements ExprVisitor, StmtVisitor
     private OutputInterface $output;
     private Phlox $phlox;
     private Environment $environment;
-    private Environment $globals;
+    public Environment $globals;
 
     public function __construct(OutputInterface $output, Phlox $phlox)
     {
@@ -206,7 +207,7 @@ class Interpreter implements ExprVisitor, StmtVisitor
         $statement->accept($this);
     }
 
-    private function executeBlock(array $statements, Environment $environment): void
+    public function executeBlock(array $statements, Environment $environment): void
     {
         $previous = $this->environment;
 
@@ -326,5 +327,14 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
 
         return $function->call($this, $arguments);
+    }
+
+    /**
+     * @param Fun $stmt
+     */
+    public function visitFunStmt($stmt): void
+    {
+        $funct = new PhloxFunction($stmt);
+        $this->environment->define($stmt->name->lexeme, $funct);
     }
 }
