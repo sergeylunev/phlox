@@ -76,10 +76,14 @@ class AstGenerator
                 'Fi' => [
                     'Expr $condition',
                     'Stmt $thenBranch',
-                    'Stmt $elseBranch'
+                    '?Stmt $elseBranch'
                 ],
                 'Prnt' => [
                     'Expr $expression',
+                ],
+                'Rtrn' => [
+                    'Token $keyword',
+                    'Expr $value',
                 ],
                 'Vari' => [
                     'Token $name',

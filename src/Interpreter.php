@@ -11,6 +11,7 @@ use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Fun;
 use Phlox\Stmt\Prnt;
+use Phlox\Stmt\Rtrn;
 use Phlox\Stmt\Whle;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -336,5 +337,18 @@ class Interpreter implements ExprVisitor, StmtVisitor
     {
         $funct = new PhloxFunction($stmt);
         $this->environment->define($stmt->name->lexeme, $funct);
+    }
+
+    /**
+     * @param Rtrn $stmt
+     */
+    public function visitRtrnStmt($stmt)
+    {
+        $value = null;
+        if ($stmt->value != null) {
+            $value = $this->evaluate($stmt->value);
+        }
+
+        throw new ReturnValue($value);
     }
 }

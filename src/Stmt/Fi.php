@@ -12,9 +12,9 @@ class Fi extends Stmt
 {
     public  Expr $condition;
     public Stmt $thenBranch;
-    public Stmt $elseBranch;
+    public ?Stmt $elseBranch;
 
-    public function __construct(Expr $condition, Stmt $thenBranch, Stmt $elseBranch)
+    public function __construct(Expr $condition, Stmt $thenBranch, ?Stmt $elseBranch)
     {
         $this->condition = $condition;
         $this->thenBranch = $thenBranch;

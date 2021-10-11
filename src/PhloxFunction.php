@@ -28,7 +28,12 @@ class PhloxFunction implements PhloxCallable
             );
         }
 
-        $interpreter->executeBlock($this->declaration->body, $environment);
+        try {
+            $interpreter->executeBlock($this->declaration->body, $environment);
+        } catch (ReturnValue $returnValue) {
+            return $returnValue->value;
+        }
+
     }
 
     public function __toString(): string

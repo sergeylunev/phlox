@@ -16,6 +16,8 @@ interface StmtVisitor
 
     public function visitPrntStmt($stmt);
 
+    public function visitRtrnStmt($stmt);
+
     public function visitVariStmt($stmt);
 
     public function visitWhleStmt($stmt);

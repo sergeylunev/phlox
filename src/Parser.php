@@ -17,6 +17,7 @@ use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Fun;
 use Phlox\Stmt\Prnt;
+use Phlox\Stmt\Rtrn;
 use Phlox\Stmt\Vari;
 use Phlox\Stmt\Whle;
 use Throwable;
@@ -109,7 +110,7 @@ class Parser
             TokenType::TOKEN_GREATER,
             TokenType::TOKEN_GREATER_EQUAL,
             TokenType::TOKEN_LESS,
-            TokenType::TOKEN_GREATER_EQUAL
+            TokenType::TOKEN_LESS_EQUAL
         )) {
             $operator = $this->previous();
             $right = $this->term();
@@ -317,6 +318,9 @@ class Parser
         if ($this->match(TokenType::TOKEN_PRINT)) {
             return $this->printStatement();
         }
+        if ($this->match(TokenType::TOKEN_RETURN)) {
+            return $this->returnStatement();
+        }
         if ($this->match(TokenType::TOKEN_WHILE)) {
             return $this->whileStatement();
         }
@@ -398,6 +402,9 @@ class Parser
         return $statements;
     }
 
+    /**
+     * @throws ParseError
+     */
     private function ifStatement(): Stmt
     {
         $this->consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
@@ -565,5 +572,21 @@ class Parser
         $body = $this->block();
 
         return new Fun($name, $parameters, $body);
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function returnStatement(): Rtrn
+    {
+        $keyword = $this->previous();
+        $value = null;
+        if (!$this->check(TokenType::TOKEN_SEMICOLON)) {
+            $value = $this->expression();
+        }
+
+        $this->consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after return value.");
+
+        return new Rtrn($keyword, $value);
     }
 }
