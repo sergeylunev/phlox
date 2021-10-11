@@ -6,6 +6,7 @@ use Cassandra\Statement;
 use http\Message\Body;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
+use Phlox\Expr\Call;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
@@ -216,7 +217,7 @@ class Parser
             return new Unary($operator, $right);
         }
 
-        return $this->primary();
+        return $this->call();
     }
 
     /**
@@ -497,5 +498,43 @@ class Parser
         }
 
         return $body;
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function call(): Expr
+    {
+        $expr = $this->primary();
+
+        while (true) {
+            if ($this->match(TokenType::TOKEN_LEFT_PAREN)) {
+                $expr = $this->finishCall($expr);
+            } else {
+                break;
+            }
+        }
+
+        return $expr;
+    }
+
+    /**
+     * @throws ParseError
+     */
+    private function finishCall(mixed $callee): Expr
+    {
+        $arguments = [];
+        if (!$this->check(TokenType::TOKEN_RIGHT_PAREN)) {
+            do {
+                if (count($arguments) >= 255) {
+                    $this->error($this->peek(), "Can't have more than 255 arguments.");
+                }
+                $arguments[] = $this->expression();
+            } while ($this->match(TokenType::TOKEN_COMMA));
+        }
+
+        $paren = $this->consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Call($callee, $paren, $arguments);
     }
 }

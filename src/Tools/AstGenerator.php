@@ -33,6 +33,11 @@ class AstGenerator
                     'Token $operator',
                     'Expr $right',
                 ],
+                'Call' => [
+                    'Expr $callee',
+                    'Token $paren',
+                    'array $arguments',
+                ],
                 'Grouping' => [
                     'Expr $expression'
                 ],

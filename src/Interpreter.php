@@ -4,7 +4,9 @@ namespace Phlox;
 
 use http\Env;
 use Phlox\Expr\Assign;
+use Phlox\Expr\Call;
 use Phlox\Expr\Logical;
+use Phlox\Native\Clock;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Prnt;
@@ -16,13 +18,22 @@ class Interpreter implements ExprVisitor, StmtVisitor
     private OutputInterface $output;
     private Phlox $phlox;
     private Environment $environment;
+    private Environment $globals;
 
     public function __construct(OutputInterface $output, Phlox $phlox)
     {
         $this->output = $output;
         $this->phlox = $phlox;
 
-        $this->environment = new Environment();
+        $this->globals = new Environment();
+        $this->environment = $this->globals;
+
+        $this->_init();
+    }
+
+    private function _init(): void
+    {
+        $this->globals->define('clock', new Clock());
     }
 
     /**
@@ -284,5 +295,36 @@ class Interpreter implements ExprVisitor, StmtVisitor
         while ($this->isTruthy($this->evaluate($stmt->condition))) {
             $this->execute($stmt->body);
         }
+    }
+
+    /**
+     * @param Call $expr
+     *
+     * @throws RuntimeError
+     */
+    public function visitCallExpr($expr)
+    {
+        $callee = $this->evaluate($expr->callee);
+
+        $arguments = [];
+        /** @var Expr $argument */
+        foreach ($expr->arguments as $argument) {
+            $arguments[] = $this->evaluate($argument);
+        }
+
+        if (!$callee instanceof PhloxCallable) {
+            throw new RuntimeError($expr->paren, "Can only call functions and classes.");
+        }
+
+        $function = $callee;
+
+        if ($argumentsCount = count($arguments) != $function->arity()) {
+            throw new RuntimeError(
+                $expr->paren,
+                "Expected {$function->arity()} arguments but got {$argumentsCount}."
+            );
+        }
+
+        return $function->call($this, $arguments);
     }
 }

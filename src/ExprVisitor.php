@@ -10,6 +10,8 @@ interface ExprVisitor
 
     public function visitBinaryExpr($expr);
 
+    public function visitCallExpr($expr);
+
     public function visitGroupingExpr($expr);
 
     public function visitLiteralExpr($expr);
