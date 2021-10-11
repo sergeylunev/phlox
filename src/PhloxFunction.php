@@ -7,10 +7,12 @@ use Phlox\Stmt\Fun;
 class PhloxFunction implements PhloxCallable
 {
     private Fun $declaration;
+    private Environment $closure;
 
-    public function __construct(Fun $declaration)
+    public function __construct(Fun $declaration, Environment $closure)
     {
         $this->declaration = $declaration;
+        $this->closure = $closure;
     }
 
     public function arity(): int
@@ -20,7 +22,7 @@ class PhloxFunction implements PhloxCallable
 
     public function call(Interpreter $interpreter, array $arguments)
     {
-        $environment = new Environment($interpreter->globals);
+        $environment = new Environment($this->closure);
         for ($i = 0; $i < count($this->declaration->params); $i++) {
             $environment->define(
                 $this->declaration->params[$i]->lexeme,

@@ -335,7 +335,7 @@ class Interpreter implements ExprVisitor, StmtVisitor
      */
     public function visitFunStmt($stmt): void
     {
-        $funct = new PhloxFunction($stmt);
+        $funct = new PhloxFunction($stmt, $this->environment);
         $this->environment->define($stmt->name->lexeme, $funct);
     }
 
