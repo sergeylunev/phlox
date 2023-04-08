@@ -2,10 +2,10 @@
 
 namespace Phlox;
 
-use http\Env;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Call;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Variable;
 use Phlox\Native\Clock;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
@@ -13,14 +13,16 @@ use Phlox\Stmt\Fun;
 use Phlox\Stmt\Prnt;
 use Phlox\Stmt\Rtrn;
 use Phlox\Stmt\Whle;
+use SplObjectStorage;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Interpreter implements ExprVisitor, StmtVisitor
 {
+    public Environment $globals;
     private OutputInterface $output;
     private Phlox $phlox;
     private Environment $environment;
-    public Environment $globals;
+    private SplObjectStorage $locals;
 
     public function __construct(OutputInterface $output, Phlox $phlox)
     {
@@ -29,6 +31,8 @@ class Interpreter implements ExprVisitor, StmtVisitor
 
         $this->globals = new Environment();
         $this->environment = $this->globals;
+
+        $this->locals = new SplObjectStorage();
 
         $this->_init();
     }
@@ -51,7 +55,12 @@ class Interpreter implements ExprVisitor, StmtVisitor
             $this->phlox->runtimeError($exception);
         }
     }
-    
+
+    private function execute(Stmt $statement): void
+    {
+        $statement->accept($this);
+    }
+
     /**
      * @throws RuntimeError
      */
@@ -100,6 +109,31 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return null;
     }
 
+    private function evaluate(Expr $expression)
+    {
+        return $expression->accept($this);
+    }
+
+    /**
+     * @throws RuntimeError
+     */
+    private function checkNumberOperands(Token $operator, $left, $right)
+    {
+        if (is_double($left) && is_double($right)) {
+            return;
+        }
+
+        throw new RuntimeError($operator, "Operands must be numbers.");
+    }
+
+    private function isEqual($a, $b): bool
+    {
+        if ($a === null && $b === null) return true;
+        if ($a === null) return false;
+
+        return $a === $b;
+    }
+
     public function visitGroupingExpr($expr)
     {
         return $this->evaluate($expr->expression);
@@ -128,11 +162,6 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return null;
     }
 
-    private function evaluate(Expr $expression)
-    {
-        return $expression->accept($this);
-    }
-
     private function isTruthy($object): bool
     {
         if ($object === null) {
@@ -146,14 +175,6 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return true;
     }
 
-    private function isEqual($a, $b): bool
-    {
-        if ($a === null && $b === null) return true;
-        if ($a === null) return false;
-
-        return $a === $b;
-    }
-
     /**
      * @throws RuntimeError
      */
@@ -164,25 +185,6 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
 
         throw new RuntimeError($operator, "Operand must be a number.");
-    }
-
-    /**
-     * @throws RuntimeError
-     */
-    private function checkNumberOperands(Token $operator, $left, $right)
-    {
-        if (is_double($left) && is_double($right)) {
-            return;
-        }
-
-        throw new RuntimeError($operator, "Operands must be numbers.");
-    }
-
-    private function stringify(mixed $value): string
-    {
-        if ($value === null) return 'nil';
-
-        return $value;
     }
 
     /**
@@ -203,29 +205,36 @@ class Interpreter implements ExprVisitor, StmtVisitor
         echo $this->stringify($value);
     }
 
-    private function execute(Stmt $statement): void
+    private function stringify(mixed $value): string
     {
-        $statement->accept($this);
+        if ($value === null) return 'nil';
+
+        return $value;
     }
 
-    public function executeBlock(array $statements, Environment $environment): void
-    {
-        $previous = $this->environment;
-
-        try {
-            $this->environment = $environment;
-
-            foreach ($statements as $statement) {
-                $this->execute($statement);
-            }
-        } finally {
-            $this->environment = $previous;
-        }
-    }
-
+    /**
+     * @param Variable $expr
+     * @return mixed
+     * @throws RuntimeError
+     */
     public function visitVariableExpr($expr)
     {
-        return $this->environment->get($expr->name);
+        return $this->lookUpVariable($expr->name, $expr);
+    }
+
+    private function lookUpVariable(Token $name, Variable $expr)
+    {
+        try {
+            $distance = $this->locals[$expr];
+        } catch (\Exception $exception) {
+            $distance = null;
+        }
+
+        if ($distance !== null) {
+            return $this->environment->getAt($distance, $name->lexeme);
+        } else {
+            return $this->globals->get($name);
+        }
     }
 
     /**
@@ -247,7 +256,13 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitAssignExpr($expr): mixed
     {
         $value = $this->evaluate($expr->value);
-        $this->environment->assign($expr->name, $value);
+
+        $distance = $this->locals[$expr];
+        if ($distance !== null) {
+            $this->environment->assignAt($distance, $expr->name, $value);
+        } else {
+            $this->globals->assign($expr->name, $value);
+        }
 
         return $value;
     }
@@ -255,6 +270,21 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitBlockStmt($stmt): void
     {
         $this->executeBlock($stmt->statements, new Environment($this->environment));
+    }
+
+    public function executeBlock(array $statements, Environment $environment): void
+    {
+        $previous = $this->environment;
+
+        try {
+            $this->environment = $environment;
+
+            foreach ($statements as $statement) {
+                $this->execute($statement);
+            }
+        } finally {
+            $this->environment = $previous;
+        }
     }
 
     /**
@@ -350,5 +380,10 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
 
         throw new ReturnValue($value);
+    }
+
+    public function resolve(Expr $expr, int $depth): void
+    {
+        $this->locals[$expr] = $depth;
     }
 }

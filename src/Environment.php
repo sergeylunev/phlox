@@ -4,8 +4,8 @@ namespace Phlox;
 
 class Environment
 {
-    protected array $values = [];
     public ?Environment $enclosing;
+    protected array $values = [];
 
     public function __construct(Environment $enclosing = null)
     {
@@ -46,6 +46,26 @@ class Environment
             return;
         }
 
-        throw new RuntimeError($name,"Undefined variable '" . $name->lexeme . "'.");
+        throw new RuntimeError($name, "Undefined variable '" . $name->lexeme . "'.");
+    }
+
+    public function getAt(mixed $distance, string $name): mixed
+    {
+        return $this->ancestor($distance)->values[$name];
+    }
+
+    private function ancestor(mixed $distance): self
+    {
+        $env = $this;
+        for ($i = 0; $i < $distance; $i++) {
+            $env = $env->enclosing;
+        }
+
+        return $env;
+    }
+
+    public function assignAt(mixed $distance, Token $name, $value)
+    {
+        $this->ancestor($distance)->values[$name->lexeme] = $value;
     }
 }

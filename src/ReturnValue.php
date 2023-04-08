@@ -2,15 +2,15 @@
 
 namespace Phlox;
 
-use Throwable;
+use RuntimeException;
 
-class ReturnValue extends \RuntimeException
+class ReturnValue extends RuntimeException
 {
     public $value;
 
     public function __construct(mixed $value)
     {
-        parent::__construct(null, null, null);
+        parent::__construct();
 
         $this->value = $value;
     }

@@ -55,6 +55,13 @@ class Phlox
             return;
         }
 
+        $resolver = new Resolver($this, $this->interpreter);
+        $resolver->resolve($statements);
+
+        if ($this->hadError) {
+            return;
+        }
+
         $this->interpreter->interpret($statements);
     }
 
