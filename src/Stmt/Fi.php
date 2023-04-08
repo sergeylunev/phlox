@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Phlox\Stmt;
 
-use Phlox\Expr;
 use Phlox\Stmt;
 use Phlox\StmtVisitor;
+use Phlox\Expr;
 
 class Fi extends Stmt
 {
-    public  Expr $condition;
+    public Expr $condition;
     public Stmt $thenBranch;
     public ?Stmt $elseBranch;
 

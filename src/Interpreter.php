@@ -4,9 +4,11 @@ namespace Phlox;
 
 use Phlox\Expr\Assign;
 use Phlox\Expr\Call;
+use Phlox\Expr\Get;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Variable;
 use Phlox\Native\Clock;
+use Phlox\Stmt\Clas;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Fun;
@@ -385,5 +387,21 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function resolve(Expr $expr, int $depth): void
     {
         $this->locals[$expr] = $depth;
+    }
+
+    /**
+     * @param Clas $stmt
+     * @return void
+     */
+    public function visitClasStmt($stmt): void
+    {
+        $this->environment->define($stmt->name->lexeme, null);
+        $klass = new PhloxClass($stmt->name->lexeme);
+        $this->environment->assign($stmt->name, $klass);
+    }
+
+    public function visitGetExpr(Get $expr)
+    {
+        // TODO: Implement visitGetExpr() method.
     }
 }

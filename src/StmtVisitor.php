@@ -4,22 +4,34 @@ declare(strict_types=1);
 
 namespace Phlox;
 
+use Phlox\Stmt\Block;
+use Phlox\Stmt\Clas;
+use Phlox\Stmt\Expression;
+use Phlox\Stmt\Fun;
+use Phlox\Stmt\Fi;
+use Phlox\Stmt\Prnt;
+use Phlox\Stmt\Rtrn;
+use Phlox\Stmt\Vari;
+use Phlox\Stmt\Whle;
+
 interface StmtVisitor
 {
-    public function visitBlockStmt($stmt);
+    public function visitBlockStmt(Block $stmt);
 
-    public function visitExpressionStmt($stmt);
+    public function visitClasStmt(Clas $stmt);
 
-    public function visitFunStmt($stmt);
+    public function visitExpressionStmt(Expression $stmt);
 
-    public function visitFiStmt($stmt);
+    public function visitFunStmt(Fun $stmt);
 
-    public function visitPrntStmt($stmt);
+    public function visitFiStmt(Fi $stmt);
 
-    public function visitRtrnStmt($stmt);
+    public function visitPrntStmt(Prnt $stmt);
 
-    public function visitVariStmt($stmt);
+    public function visitRtrnStmt(Rtrn $stmt);
 
-    public function visitWhleStmt($stmt);
+    public function visitVariStmt(Vari $stmt);
+
+    public function visitWhleStmt(Whle $stmt);
 
 }

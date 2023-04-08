@@ -12,6 +12,7 @@ use Phlox\Expr\Logical;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
+use Phlox\Stmt\Clas;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Fi;
 use Phlox\Stmt\Fun;
@@ -277,5 +278,15 @@ class Resolver implements ExprVisitor, StmtVisitor
     {
         $this->resolveExpr($stmt->condition);
         $this->resolveStmt($stmt->body);
+    }
+
+    /**
+     * @param Clas $stmt
+     * @return void
+     */
+    public function visitClasStmt($stmt): void
+    {
+        $this->declare($stmt->name);
+        $this->define($stmt->name);
     }
 }

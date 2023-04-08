@@ -6,21 +6,20 @@ namespace Phlox\Stmt;
 
 use Phlox\Stmt;
 use Phlox\StmtVisitor;
-use Phlox\Expr;
 use Phlox\Token;
 
-class Vari extends Stmt
+class Clas extends Stmt
 {
     public Token $name;
-    public Expr $initializer;
+    public array $methods;
 
-    public function __construct(Token $name, Expr $initializer)
+    public function __construct(Token $name, array $methods)
     {
         $this->name = $name;
-        $this->initializer = $initializer;
+        $this->methods = $methods;
     }
     public function accept(StmtVisitor $visitor)
     {
-        return $visitor->visitVariStmt($this);
+        return $visitor->visitClasStmt($this);
     }
 }
