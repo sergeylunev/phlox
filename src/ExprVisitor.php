@@ -11,6 +11,8 @@ use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
+use Phlox\Expr\Thus;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 
@@ -29,6 +31,10 @@ interface ExprVisitor
     public function visitLiteralExpr(Literal $expr);
 
     public function visitLogicalExpr(Logical $expr);
+
+    public function visitSetExpr(Set $expr);
+
+    public function visitThusExpr(Thus $expr);
 
     public function visitUnaryExpr(Unary $expr);
 

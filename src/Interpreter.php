@@ -6,6 +6,8 @@ use Phlox\Expr\Assign;
 use Phlox\Expr\Call;
 use Phlox\Expr\Get;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
+use Phlox\Expr\Thus;
 use Phlox\Expr\Variable;
 use Phlox\Native\Clock;
 use Phlox\Stmt\Clas;
@@ -224,7 +226,7 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return $this->lookUpVariable($expr->name, $expr);
     }
 
-    private function lookUpVariable(Token $name, Variable $expr)
+    private function lookUpVariable(Token $name, Expr $expr)
     {
         try {
             $distance = $this->locals[$expr];
@@ -367,7 +369,7 @@ class Interpreter implements ExprVisitor, StmtVisitor
      */
     public function visitFunStmt($stmt): void
     {
-        $funct = new PhloxFunction($stmt, $this->environment);
+        $funct = new PhloxFunction($stmt, $this->environment, false);
         $this->environment->define($stmt->name->lexeme, $funct);
     }
 
@@ -396,12 +398,48 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitClasStmt($stmt): void
     {
         $this->environment->define($stmt->name->lexeme, null);
-        $klass = new PhloxClass($stmt->name->lexeme);
+
+        $methods = [];
+        foreach ($stmt->methods as $method) {
+            $fun = new PhloxFunction(
+                $method,
+                $this->environment,
+                $method->name->lexeme === "init"
+            );
+            $methods[$method->name->lexeme] = $fun;
+        }
+
+        $klass = new PhloxClass($stmt->name->lexeme, $methods);
         $this->environment->assign($stmt->name, $klass);
     }
 
     public function visitGetExpr(Get $expr)
     {
-        // TODO: Implement visitGetExpr() method.
+        $object = $this->evaluate($expr->object);
+        if ($object instanceof PhloxInstance) {
+            return $object->get($expr->name);
+        }
+
+        throw new RuntimeError($expr->name,
+            "Only instances have properties.");
+    }
+
+    public function visitSetExpr(Set $expr)
+    {
+        $object = $this->evaluate($expr->object);
+        if (!($object instanceof PhloxInstance)) {
+            throw new RuntimeError($expr->name,
+                "Only instances have fields.");
+        }
+
+        $value = $this->evaluate($expr->value);
+        $object->set($expr->name, $value);
+
+        return $value;
+    }
+
+    public function visitThusExpr(Thus $expr)
+    {
+        return $this->lookUpVariable($expr->keyword, $expr);
     }
 }

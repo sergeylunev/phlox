@@ -7,8 +7,11 @@ namespace Phlox;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Call;
+use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
+use Phlox\Expr\Thus;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
@@ -25,6 +28,7 @@ class Resolver implements ExprVisitor, StmtVisitor
 {
     private array $scopes = [];
     private FunctionType $currentFunction = FunctionType::NONE;
+    private ClassType $currentClass = ClassType::NONE;
 
     public function __construct(
         readonly private Phlox       $phlox,
@@ -253,6 +257,10 @@ class Resolver implements ExprVisitor, StmtVisitor
     public function visitRtrnStmt($stmt): void
     {
         if ($stmt->value !== null) {
+            if ($this->currentFunction === FunctionType::INITIALIZER) {
+                $this->phlox->tokenTypeError($stmt->keyword, "Can't return a value from an initializer.");
+            }
+
             $this->resolveExpr($stmt->value);
         }
     }
@@ -286,7 +294,46 @@ class Resolver implements ExprVisitor, StmtVisitor
      */
     public function visitClasStmt($stmt): void
     {
+        $enclosingClass = $this->currentClass;
+        $this->currentClass = ClassType::KLASS;
+
         $this->declare($stmt->name);
         $this->define($stmt->name);
+
+        $this->beginScope();
+        $this->scopes[count($this->scopes) - 1]["this"] = true;
+
+        foreach ($stmt->methods as $method) {
+            $declaration = FunctionType::METHOD;
+            if ($method->name->lexeme === "init") {
+                $declaration = FunctionType::INITIALIZER;
+            }
+            $this->resolveFunction($method, $declaration);
+        }
+
+        $this->endScope();
+
+        $this->currentClass = $enclosingClass;
+    }
+
+    public function visitGetExpr(Get $expr): void
+    {
+        $this->resolveExpr($expr->object);
+    }
+
+    public function visitSetExpr(Set $expr): void
+    {
+        $this->resolveExpr($expr->value);
+        $this->resolveExpr($expr->object);
+    }
+
+    public function visitThusExpr(Thus $expr): void
+    {
+        if ($this->currentClass === ClassType::NONE) {
+            $this->phlox->tokenTypeError($expr->keyword, "Can't use 'this' outside of a class.");
+            return;
+        }
+
+        $this->resolveLocal($expr, $expr->keyword);
     }
 }

@@ -6,13 +6,12 @@ use Phlox\Stmt\Fun;
 
 class PhloxFunction implements PhloxCallable
 {
-    private Fun $declaration;
-    private Environment $closure;
-
-    public function __construct(Fun $declaration, Environment $closure)
+    public function __construct(
+        private Fun         $declaration,
+        private Environment $closure,
+        private bool        $isInitializer
+    )
     {
-        $this->declaration = $declaration;
-        $this->closure = $closure;
     }
 
     public function arity(): int
@@ -33,13 +32,25 @@ class PhloxFunction implements PhloxCallable
         try {
             $interpreter->executeBlock($this->declaration->body, $environment);
         } catch (ReturnValue $returnValue) {
+            if ($this->isInitializer) return $this->closure->getAt(0, "this");
+
             return $returnValue->value;
         }
-
+        if ($this->isInitializer) {
+            return $this->closure->getAt(0, "this");
+        }
     }
 
     public function __toString(): string
     {
         return '<fn ' . $this->declaration->name->lexeme . '>';
+    }
+
+    public function bind(PhloxInstance $instance): PhloxFunction
+    {
+        $env = new Environment();
+        $env->define("this", $instance);
+
+        return new PhloxFunction($this->declaration, $env, $this->isInitializer);
     }
 }

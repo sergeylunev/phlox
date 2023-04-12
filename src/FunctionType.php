@@ -8,4 +8,6 @@ enum FunctionType
 {
     case NONE;
     case FUNC;
+    case METHOD;
+    case INITIALIZER;
 }

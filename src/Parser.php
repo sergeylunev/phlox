@@ -5,9 +5,12 @@ namespace Phlox;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Call;
+use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
+use Phlox\Expr\Thus;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
@@ -234,6 +237,8 @@ class Parser
                 $name = $expr->name;
 
                 return new Assign($name, $value);
+            } else if ($expr instanceof Get) {
+                return new Set($expr->object, $expr->name, $value);
             }
 
             $this->error($equals, 'Invalid assignment target.');
@@ -373,6 +378,9 @@ class Parser
         while (true) {
             if ($this->match(TokenType::TOKEN_LEFT_PAREN)) {
                 $expr = $this->finishCall($expr);
+            } else if ($this->match(TokenType::TOKEN_DOT)) {
+                $name = $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect property name after '.'.");
+                $expr = new Get($expr, $name);
             } else {
                 break;
             }
@@ -399,6 +407,10 @@ class Parser
 
         if ($this->match(TokenType::TOKEN_NUMBER, TokenType::TOKEN_STRING)) {
             return new Literal($this->previous()->literal);
+        }
+
+        if ($this->match(TokenType::TOKEN_THIS)) {
+            return new Thus($this->previous());
         }
 
         if ($this->match(TokenType::TOKEN_IDENTIFIER)) {

@@ -108,6 +108,31 @@ class AstGenerator
                     ]
                 ),
                 new AstDto(
+                    name: "Set",
+                    imports: [
+                        "Phlox\Expr",
+                        "Phlox\ExprVisitor",
+                        "Phlox\Token",
+                    ],
+                    types: [
+                        'Expr $object',
+                        'Token $name',
+                        'Expr $value',
+
+                    ]
+                ),
+                new AstDto(
+                    name: 'Thus',
+                    imports: [
+                        "Phlox\Expr",
+                        "Phlox\ExprVisitor",
+                        "Phlox\Token",
+                    ],
+                    types: [
+                        'Token $keyword',
+                    ]
+                ),
+                new AstDto(
                     name: 'Unary',
                     imports: [
                         "Phlox\Expr",
@@ -334,16 +359,16 @@ class AstGenerator
         fwrite($file, $classString);
     }
 
-    private function writeAbstractAcceptMethod($file, string $baseName): void
-    {
-        fwrite($file, "    public abstract function accept({$baseName}Visitor \$visitor);");
-    }
-
     private function writeBlankLine($file, int $times = 1): void
     {
         for ($i = 0; $i < $times; $i++) {
             fwrite($file, "\n");
         }
+    }
+
+    private function writeAbstractAcceptMethod($file, string $baseName): void
+    {
+        fwrite($file, "    public abstract function accept({$baseName}Visitor \$visitor);");
     }
 
     protected function writeFooter($file): void
