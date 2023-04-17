@@ -10,6 +10,7 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\Super;
 use Phlox\Expr\Thus;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
@@ -123,6 +124,13 @@ class Parser
     private function classDeclaration(): Clas
     {
         $name = $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect class name");
+
+        $superClass = null;
+        if ($this->match(TokenType::TOKEN_LESS)) {
+            $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect superclass name.");
+            $superClass = new Variable($this->previous());
+        }
+
         $this->consume(TokenType::TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
         $methods = [];
@@ -132,7 +140,7 @@ class Parser
 
         $this->consume(TokenType::TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Clas($name, $methods);
+        return new Clas($name, $superClass, $methods);
     }
 
     /**
@@ -407,6 +415,13 @@ class Parser
 
         if ($this->match(TokenType::TOKEN_NUMBER, TokenType::TOKEN_STRING)) {
             return new Literal($this->previous()->literal);
+        }
+
+        if ($this->match(TokenType::TOKEN_SUPER)) {
+            $keyword = $this->previous();
+            $this->consume(TokenType::TOKEN_DOT, "Expect '.' after 'super'.");
+            $method = $this->consume(TokenType::TOKEN_IDENTIFIER, "Expect superclass method name.");
+            return new Super($keyword, $method);
         }
 
         if ($this->match(TokenType::TOKEN_THIS)) {

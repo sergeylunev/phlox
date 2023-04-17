@@ -122,6 +122,18 @@ class AstGenerator
                     ]
                 ),
                 new AstDto(
+                    name: 'Super',
+                    imports: [
+                        "Phlox\Expr",
+                        "Phlox\ExprVisitor",
+                        "Phlox\Token",
+                    ],
+                    types: [
+                        'Token $keyword',
+                        'Token $method'
+                    ],
+                ),
+                new AstDto(
                     name: 'Thus',
                     imports: [
                         "Phlox\Expr",
@@ -177,9 +189,11 @@ class AstGenerator
                         "Phlox\Stmt",
                         "Phlox\StmtVisitor",
                         "Phlox\Token",
+                        'Phlox\Expr\Variable'
                     ],
                     types: [
                         'Token $name',
+                        '?Variable $superclass',
                         'array $methods',
                     ]
                 ),

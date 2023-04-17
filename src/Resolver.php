@@ -11,6 +11,7 @@ use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\Super;
 use Phlox\Expr\Thus;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
@@ -300,6 +301,20 @@ class Resolver implements ExprVisitor, StmtVisitor
         $this->declare($stmt->name);
         $this->define($stmt->name);
 
+        if ($stmt->superclass !== null && $stmt->name->lexeme === $stmt->superclass->name->lexeme) {
+            $this->phlox->tokenTypeError($stmt->superclass->name, "A class can't inherit from itself.");
+        }
+
+        if ($stmt->superclass !== null) {
+            $this->currentClass = ClassType::SUBCLASS;
+            $this->resolveExpr($stmt->superclass);
+        }
+
+        if ($stmt->superclass !== null) {
+            $this->beginScope();
+            $this->scopes[count($this->scopes) - 1]['super'] = true;
+        }
+
         $this->beginScope();
         $this->scopes[count($this->scopes) - 1]["this"] = true;
 
@@ -312,6 +327,8 @@ class Resolver implements ExprVisitor, StmtVisitor
         }
 
         $this->endScope();
+
+        if ($stmt->superclass !== null) $this->endScope();
 
         $this->currentClass = $enclosingClass;
     }
@@ -332,6 +349,17 @@ class Resolver implements ExprVisitor, StmtVisitor
         if ($this->currentClass === ClassType::NONE) {
             $this->phlox->tokenTypeError($expr->keyword, "Can't use 'this' outside of a class.");
             return;
+        }
+
+        $this->resolveLocal($expr, $expr->keyword);
+    }
+
+    public function visitSuperExpr(Super $expr): void
+    {
+        if ($this->currentClass === ClassType::NONE) {
+            $this->phlox->tokenTypeError($expr->keyword, "Can't use 'super' outside of a class.");
+        } else if ($this->currentClass !== ClassType::SUBCLASS) {
+            $this->phlox->tokenTypeError($expr->keyword, "Can't use 'super' in a class with no superclass.");
         }
 
         $this->resolveLocal($expr, $expr->keyword);

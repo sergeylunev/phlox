@@ -7,6 +7,7 @@ use Phlox\Expr\Call;
 use Phlox\Expr\Get;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\Super;
 use Phlox\Expr\Thus;
 use Phlox\Expr\Variable;
 use Phlox\Native\Clock;
@@ -397,19 +398,37 @@ class Interpreter implements ExprVisitor, StmtVisitor
      */
     public function visitClasStmt($stmt): void
     {
+        $superClass = null;
+        if ($stmt->superclass !== null) {
+            $superClass = $this->evaluate($stmt->superclass);
+            if (!($superClass instanceof PhloxClass)) {
+                throw new RuntimeError($stmt->superclass->name, "Superclass must be a class.");
+            }
+        }
+
         $this->environment->define($stmt->name->lexeme, null);
+
+        if ($superClass !== null) {
+            $environment = new Environment($this->environment);
+            $environment->define("super", $superClass);
+        }
 
         $methods = [];
         foreach ($stmt->methods as $method) {
             $fun = new PhloxFunction(
                 $method,
-                $this->environment,
+                $environment ?? $this->environment,
                 $method->name->lexeme === "init"
             );
             $methods[$method->name->lexeme] = $fun;
         }
 
-        $klass = new PhloxClass($stmt->name->lexeme, $methods);
+        $klass = new PhloxClass($stmt->name->lexeme, $superClass, $methods);
+
+        if ($superClass !== null) {
+//            $this->environment = $this->environment->enclosing;
+        }
+
         $this->environment->assign($stmt->name, $klass);
     }
 
@@ -441,5 +460,22 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitThusExpr(Thus $expr)
     {
         return $this->lookUpVariable($expr->keyword, $expr);
+    }
+
+    public function visitSuperExpr(Super $expr)
+    {
+        $distance = $this->locals[$expr];
+
+        /** @var PhloxClass $supperClass */
+        $supperClass = $this->environment->getAt($distance, "super");
+        $object = $this->environment->getAt($distance - 1, "this");
+
+        $method = $supperClass->findMethod($expr->method->lexeme);
+
+        if ($method === null) {
+            throw new RuntimeError($expr->method, "Undefined property '" .$expr->method->lexeme. "'.");
+        }
+
+        return $method->bind($object);
     }
 }

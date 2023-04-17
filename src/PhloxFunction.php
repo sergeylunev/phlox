@@ -48,7 +48,7 @@ class PhloxFunction implements PhloxCallable
 
     public function bind(PhloxInstance $instance): PhloxFunction
     {
-        $env = new Environment();
+        $env = new Environment($this->closure);
         $env->define("this", $instance);
 
         return new PhloxFunction($this->declaration, $env, $this->isInitializer);

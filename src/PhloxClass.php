@@ -8,6 +8,7 @@ class PhloxClass implements PhloxCallable
 {
     public function __construct(
         readonly public string $name,
+        readonly public ?PhloxClass $superClass,
         readonly public array $methods
     )
     {
@@ -43,6 +44,10 @@ class PhloxClass implements PhloxCallable
     {
         if (array_key_exists($name, $this->methods)) {
             return $this->methods[$name];
+        }
+
+        if ($this->superClass !== null) {
+            return $this->superClass->findMethod($name);
         }
 
         return null;
